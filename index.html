@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Carta</title>
+  <meta name="theme-color" content="#E4572E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="pantalla-carta">
+  <header class="cabecera">
+    <div class="contenedor">
+      <div class="fila" id="cabecera-fila">
+        <div class="logo" id="logo"></div>
+        <div>
+          <h1 id="nombre">Cargando…</h1>
+          <p id="eslogan"></p>
+        </div>
+      </div>
+      <span class="etiqueta-estado" id="estado-local"></span>
+    </div>
+  </header>
+
+  <nav class="categorias">
+    <div class="contenedor buscador-wrap">
+      <input id="buscar" type="search" placeholder="🔍 Buscar producto o ingrediente…" autocomplete="off" aria-label="Buscar producto">
+    </div>
+    <div class="contenedor" id="chips"></div>
+  </nav>
+
+  <main class="contenedor" id="menu"></main>
+  <p class="contenedor sin-resultados oculto" id="sin-resultados">No encontramos productos con esa búsqueda.</p>
+  <div class="espacio-barra"></div>
+
+  <!-- Barra fija del carrito -->
+  <div class="barra-carrito oculto" id="barra">
+    <div class="contenedor" style="padding:0">
+      <button class="boton" id="ver-carrito">
+        <span><span class="burbuja" id="cant-total">0</span>&nbsp; Ver pedido</span>
+        <span id="total-barra">$0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="velo oculto" id="velo"></div>
+
+  <!-- Hoja: personalizar producto -->
+  <section class="hoja oculto" id="hoja-producto" aria-modal="true" role="dialog">
+    <div class="agarre"></div>
+    <div class="contenedor">
+      <div class="prod-cabeza">
+        <div>
+          <h2 id="p-nombre"></h2>
+          <p class="prod-precio" id="p-precio"></p>
+        </div>
+        <button class="cerrar" data-cerrar aria-label="Cerrar">✕</button>
+      </div>
+
+      <div id="p-ingredientes-bloque">
+        <h3 class="sub">Ingredientes <small>Desmarca lo que no quieras</small></h3>
+        <div id="p-ingredientes"></div>
+      </div>
+
+      <div id="p-adicionales-bloque">
+        <h3 class="sub">Adicionales <small>Opcional</small></h3>
+        <div id="p-adicionales"></div>
+      </div>
+
+      <div class="campo" style="margin-top:14px">
+        <label for="p-nota">Nota para este producto (opcional)</label>
+        <input id="p-nota" maxlength="140" placeholder="Ej: término medio, salsa aparte">
+      </div>
+
+      <div class="prod-pie">
+        <div class="contador grande">
+          <button class="menos" id="p-menos" aria-label="Menos">−</button>
+          <span id="p-cant">1</span>
+          <button id="p-mas" aria-label="Más">+</button>
+        </div>
+        <button class="boton" id="p-agregar"><span>Agregar</span><span id="p-total">$0</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hoja: carrito + datos del cliente -->
+  <section class="hoja oculto" id="hoja" aria-modal="true" role="dialog">
+    <div class="agarre"></div>
+    <div class="contenedor">
+      <div class="prod-cabeza">
+        <h2>Tu pedido</h2>
+        <button class="cerrar" data-cerrar aria-label="Cerrar">✕</button>
+      </div>
+      <div id="lineas"></div>
+
+      <p class="solo-dom oculto" id="solo-domicilio">🛵 Solo domicilio</p>
+      <div class="opciones" id="bloque-entrega">
+        <button class="opcion activa" data-entrega="domicilio">🛵 Domicilio</button>
+        <button class="opcion" data-entrega="recoger">🏪 Recoger</button>
+      </div>
+
+      <form id="form" novalidate>
+        <div class="campo">
+          <label for="f-nombre">Nombre</label>
+          <input id="f-nombre" autocomplete="name" required>
+        </div>
+        <div class="campo">
+          <label for="f-tel">Celular (WhatsApp)</label>
+          <input id="f-tel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="300 123 4567" required>
+        </div>
+        <div id="campos-domicilio">
+          <div class="campo">
+            <label for="f-dir">Dirección</label>
+            <input id="f-dir" autocomplete="street-address" placeholder="Calle, número, apto">
+          </div>
+          <div class="campo">
+            <label for="f-barrio">Barrio</label>
+            <input id="f-barrio">
+          </div>
+        </div>
+        <div id="bloque-pago">
+          <h3 class="sub" style="margin-top:6px">¿Cómo vas a pagar?</h3>
+          <div class="opciones" style="margin-top:0">
+            <button type="button" class="opcion" data-metodo="transferencia">📲 Transferencia / QR</button>
+            <button type="button" class="opcion" data-metodo="efectivo">💵 Efectivo</button>
+          </div>
+          <div class="campo oculto" id="campo-paga-con">
+            <label for="f-paga-con">¿Con cuánto vas a pagar? (para llevarte el cambio)</label>
+            <input id="f-paga-con" inputmode="numeric" placeholder="Ej: 50.000 · déjalo vacío si pagas exacto">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="f-notas">Notas para el restaurante (opcional)</label>
+          <textarea id="f-notas" placeholder="Timbre dañado, llamar al llegar, etc."></textarea>
+        </div>
+
+        <p class="error-txt oculto" id="error"></p>
+        <button class="boton" id="pagar" type="submit">
+          <span>Continuar</span><span id="total-pagar">$0</span>
+        </button>
+        <p class="aviso" id="aviso-pago">Después envías tu pedido por WhatsApp al restaurante.</p>
+      </form>
+    </div>
+  </section>
+
+  </div>
+
+  <!-- ===== Pantalla final: pagar y enviar por WhatsApp ===== -->
+  <main class="pago oculto" id="pantalla-pago">
+    <button class="volver" id="volver" type="button">← Volver a la carta</button>
+    <section class="tarjeta-p monto">
+      <small id="rest-nombre">Tu pedido</small>
+      <strong id="total">$0</strong>
+      <span class="metodo" id="metodo"></span>
+      <p class="cambio oculto" id="cambio"></p>
+      <p class="cambio oculto" id="nota-dom">🛵 Valor de los productos. El domicilio se cobra aparte según tu zona.</p>
+    </section>
+
+    <!-- Solo transferencia / QR -->
+    <section class="tarjeta-p oculto" id="paso-pagar">
+      <p class="paso-t"><span class="num">1</span><b>Paga <span id="total-txt"></span></b></p>
+      <div id="cuentas"></div>
+      <div class="qr oculto" id="bloque-qr">
+        <img id="qr" alt="Código QR de pago">
+        <br><a id="descargar-qr" download>⬇ Guardar QR en el celular</a>
+        <p>Sirve desde <b>Nequi, Bancolombia, Daviplata o cualquier banco</b>. Si estás en el celular: guarda el QR y en tu app elige <b>pagar con QR → desde la galería</b>.</p>
+      </div>
+      <p class="nota" id="instrucciones" style="margin-top:10px"></p>
+    </section>
+
+    <section class="tarjeta-p oculto" id="paso-captura">
+      <p class="paso-t"><span class="num">2</span><b>Toma una captura del pago aprobado</b></p>
+      <p class="nota">La necesitas para que el restaurante confirme tu pedido.</p>
+    </section>
+
+    <section class="tarjeta-p">
+      <p class="paso-t"><span class="num" id="num-enviar">3</span><b>Envía tu pedido por WhatsApp</b></p>
+      <div class="resumen-ped" id="resumen"></div>
+      <a class="boton centrado whatsapp" id="enviar" target="_blank" rel="noopener" style="margin-top:14px">Enviar pedido por WhatsApp</a>
+      <p class="nota" id="nota-enviar" style="margin-top:10px"></p>
+      <div class="enviado oculto" id="enviado">
+        ✅ ¡Listo! Si ya enviaste el mensaje, el restaurante te confirmará por WhatsApp.
+        <br>¿No se abrió WhatsApp? Toca el botón verde otra vez.
+      </div>
+    </section>
+  </main>
+
+  <script src="data/restaurantes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
