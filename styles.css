@@ -230,3 +230,11 @@ button { cursor: pointer; }
     .enviado { background: #e4f5ea; border-radius: 12px; padding: 12px 14px; color: #14532d; font-size: 14px; margin-top: 12px; }
   
 .volver { border: none; background: none; font-weight: 700; font-size: 15px; padding: 4px 0 12px; color: var(--tinta); cursor: pointer; }
+
+/* ---------- Abierto / cerrado ---------- */
+.etiqueta-estado.abierto { background: #1f8f4e; }
+.etiqueta-estado.cerrado { background: #c62828; }
+.horario-txt { margin: 8px 0 0; font-size: 13px; opacity: .85; }
+.cabecera:has(.logo-ancho) .horario-txt { text-align: center; }
+.aviso-cerrado { margin: 14px 0 0; background: #fde8e8; color: var(--error); border-radius: 12px; padding: 12px 14px; font-weight: 600; font-size: 14px; text-align: center; line-height: 1.45; }
+.cerrado-ahora .mas-solo, .cerrado-ahora .contador button, .cerrado-ahora #barra { opacity: .4; pointer-events: none; }

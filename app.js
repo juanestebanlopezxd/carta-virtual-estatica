@@ -87,9 +87,7 @@ function iniciar() {
     document.querySelector('[data-metodo="efectivo"]').remove();
     elegirMetodo('transferencia');
   }
-  $('#estado-local').textContent = !carta.abierto
-    ? '● Cerrado en este momento'
-    : carta.horarioTexto ? `🕓 Horario: ${carta.horarioTexto}` : '● Abierto · recibiendo pedidos';
+  $('#horario-txt').textContent = textoHorario();
   if (carta.soloDomicilio) {
     entrega = 'domicilio';
     $('#bloque-entrega').classList.add('oculto');
@@ -112,6 +110,8 @@ function iniciar() {
 
   pintarMenu();
   actualizar();
+  refrescarEstado();
+  setInterval(refrescarEstado, 30000); // revisa cada 30 s si abrió o cerró
 }
 
 function pintarMenu() {
@@ -146,7 +146,80 @@ function pintarMenu() {
       }).join('')}
     </section>`).join('');
 
-  if (!carta.abierto) document.querySelectorAll('#menu button').forEach((b) => (b.disabled = true));
+}
+
+// ---------- horario: abierto / cerrado (hora de Colombia) ----------
+const DIAS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+const NOMBRE_DIA = { lun: 'lunes', mar: 'martes', mie: 'miércoles', jue: 'jueves', vie: 'viernes', sab: 'sábado', dom: 'domingo' };
+const aMinutos = (hhmm) => { const [h, m] = String(hhmm).split(':').map(Number); return h * 60 + (m || 0); };
+function horaBonita(hhmm) {
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return `${h % 12 || 12}:${String(m || 0).padStart(2, '0')} ${h >= 12 && h < 24 ? 'p. m.' : 'a. m.'}`;
+}
+
+// Día (0 = domingo) y minuto del día en Colombia, sin importar la zona del celular
+function ahoraColombia() {
+  const partes = Object.fromEntries(new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Bogota', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return { dia: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(partes.weekday), minuto: Number(partes.hour) * 60 + Number(partes.minute) };
+}
+
+// Tramos de atención por día; si "hasta" es menor que "desde", pasa la medianoche
+function tramos() {
+  const t = [];
+  for (const b of carta.horario || []) {
+    const ini = aMinutos(b.desde);
+    let fin = aMinutos(b.hasta);
+    if (fin <= ini) fin += 1440;
+    for (const d of b.dias || []) if (DIAS.includes(d)) t.push({ dia: DIAS.indexOf(d), ini, fin, desde: b.desde, hasta: b.hasta });
+  }
+  return t;
+}
+
+function estadoHorario() {
+  if (carta.abierto === false) return { abierto: false, texto: 'Cerrado por hoy' };
+  const lista = tramos();
+  if (!lista.length) return { abierto: true, texto: 'Abierto' };
+  const { dia, minuto } = ahoraColombia();
+  const ayer = (dia + 6) % 7;
+  const ahora = lista.find((t) => t.dia === dia && minuto >= t.ini && minuto < t.fin)
+    || lista.find((t) => t.dia === ayer && t.fin > 1440 && minuto < t.fin - 1440);
+  if (ahora) return { abierto: true, texto: `Abierto · cerramos a las ${horaBonita(ahora.hasta)}` };
+  for (let k = 0; k < 8; k++) {
+    const d = (dia + k) % 7;
+    const prox = lista.filter((t) => t.dia === d && (k > 0 || t.ini > minuto)).sort((a, b) => a.ini - b.ini)[0];
+    if (prox) {
+      const cuando = k === 0 ? 'hoy' : k === 1 ? 'mañana' : `el ${NOMBRE_DIA[DIAS[d]]}`;
+      return { abierto: false, texto: `Cerrado · abrimos ${cuando} a las ${horaBonita(prox.desde)}` };
+    }
+  }
+  return { abierto: false, texto: 'Cerrado' };
+}
+const estaAbierto = () => estadoHorario().abierto;
+
+// "Horario: todos los días 4:00 p. m. – 11:00 p. m."
+function textoHorario() {
+  const h = carta.horario || [];
+  if (!h.length) return '';
+  return 'Horario: ' + h.map((b) => {
+    const dias = b.dias.length === 7 ? 'todos los días' : b.dias.map((d) => NOMBRE_DIA[d]).join(', ');
+    return `${dias} ${horaBonita(b.desde)} – ${horaBonita(b.hasta)}`;
+  }).join(' · ');
+}
+
+// Pinta el estado y bloquea pedidos si está cerrado
+function refrescarEstado() {
+  const { abierto, texto } = estadoHorario();
+  const et = $('#estado-local');
+  et.textContent = '● ' + texto;
+  et.classList.toggle('abierto', abierto);
+  et.classList.toggle('cerrado', !abierto);
+  document.body.classList.toggle('cerrado-ahora', !abierto);
+  $('#aviso-cerrado').innerHTML = abierto ? '' : `${esc(texto)}<br>Puedes ver la carta, pero en este momento no recibimos pedidos.`;
+  $('#aviso-cerrado').classList.toggle('oculto', abierto);
+  if (!abierto && !$('#hoja-producto').classList.contains('oculto')) cerrarHojas();
+  pintarLineas();
 }
 
 // ---------- buscador ----------
@@ -258,7 +331,7 @@ function pintarLineas() {
   }
   $('#lineas').innerHTML = filas.join('');
   $('#total-pagar').textContent = pesos(totalFinal());
-  $('#pagar').disabled = !carta.abierto || !carrito.length || subtotal() < (carta.pedidoMinimo || 0);
+  $('#pagar').disabled = !estaAbierto() || !carrito.length || subtotal() < (carta.pedidoMinimo || 0);
 }
 
 // ---------- ventana de producto (quitar ingredientes / adicionales) ----------
@@ -353,7 +426,7 @@ document.addEventListener('click', (e) => {
   }
 
   const abrirP = e.target.closest('[data-abrir]');
-  if (abrirP && carta.abierto) return abrirProducto(abrirP.dataset.abrir);
+  if (abrirP && estaAbierto()) return abrirProducto(abrirP.dataset.abrir);
 
   if (e.target.closest('[data-cerrar]')) return cerrarHojas();
 
@@ -406,6 +479,7 @@ $('#form').addEventListener('submit', (e) => {
   if (cliente.nombre.length < 2) return mostrarError('Escribe tu nombre');
   if (!/^3\d{9}$/.test(cliente.telefono.replace(/^57/, ''))) return mostrarError('Escribe un celular válido de 10 dígitos');
   if (entrega === 'domicilio' && cliente.direccion.length < 5) return mostrarError('Escribe la dirección de entrega');
+  if (!estaAbierto()) return mostrarError(estadoHorario().texto + ' — por ahora no recibimos pedidos');
   if (!metodoPago) return mostrarError('Elige cómo vas a pagar');
   const pagaCon = Number($('#f-paga-con').value.replace(/\D/g, '')) || null;
   if (metodoPago === 'efectivo' && pagaCon && pagaCon < totalFinal()) return mostrarError(`El valor con el que pagas es menor al valor del pedido (${pesos(totalFinal())})`);
@@ -578,7 +652,14 @@ document.addEventListener('click', (e) => {
   if (b) copiar(b.dataset.copiar, b);
 });
 $('#volver').addEventListener('click', volverACarta);
-$('#enviar').addEventListener('click', () => {
+$('#enviar').addEventListener('click', (e) => {
+  if (!estaAbierto()) {
+    e.preventDefault();
+    $('#error-enviar').textContent = `${estadoHorario().texto} — por ahora no recibimos pedidos`;
+    $('#error-enviar').classList.remove('oculto');
+    return;
+  }
+  $('#error-enviar').classList.add('oculto');
   // El pedido ya se envió: se vacía el carrito
   carrito = [];
   guardarYActualizar();

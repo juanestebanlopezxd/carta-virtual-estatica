@@ -24,8 +24,10 @@ Es JavaScript: respeta las comillas `"`, las comas `,` y las llaves `{ }`.
 - Precio de un producto: `"precio": 24900` (sin puntos ni $).
 - Agotado: `"disponible": false`.
 - Número de WhatsApp que recibe los pedidos: `"whatsapp": "573185255540"` (57 + número).
-- Horario que se muestra arriba: `"horarioTexto": "4:00 p. m. – 11:00 p. m."`.
-- Cerrar la carta un día: `"abierto": false`.
+- Horario: `"horario": [{ "dias": ["lun", …, "dom"], "desde": "16:00", "hasta": "23:00" }]` (formato 24 h).
+  La página muestra sola **Abierto** o **Cerrado** según la hora de Colombia, y si está cerrado
+  no deja agregar productos, continuar ni enviar el pedido.
+- Cerrar la carta un día (festivo, imprevisto): `"abierto": false`.
 - Llave y titular: en `"pago" → "cuentas"`. QR: reemplaza `img/qr-hard-burgers.png` (y la tarjeta `img/qr-hard-burgers-tarjeta.png`).
 
 ## Publicarla gratis (para tener el link)

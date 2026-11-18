@@ -1,6 +1,12 @@
 // ============================================================
 //  DATOS DE LA CARTA  (edita aquí precios, productos, horario…)
 //  Es JavaScript: respeta comillas, comas y llaves.
+//
+//  HORARIO: "dias" puede llevar lun mar mie jue vie sab dom.
+//  "desde" y "hasta" en formato 24 h (16:00 = 4 p. m.).
+//  Si un día cambia, agrega otra línea, por ejemplo:
+//    { "dias": ["vie", "sab"], "desde": "16:00", "hasta": "01:00" }   <- hasta la 1 a. m.
+//  "abierto": false cierra la carta a mano (festivos, imprevistos).
 // ============================================================
 window.RESTAURANTES = [
   {
@@ -14,7 +20,9 @@ window.RESTAURANTES = [
     "direccion": "Por definir",
     "abierto": true,
     "soloDomicilio": true,
-    "horarioTexto": "4:00 p. m. – 11:00 p. m.",
+    "horario": [
+      { "dias": ["lun", "mar", "mie", "jue", "vie", "sab", "dom"], "desde": "16:00", "hasta": "23:00" }
+    ],
     "domicilioAparte": true,
     "costoDomicilio": 0,
     "pedidoMinimo": 0,
